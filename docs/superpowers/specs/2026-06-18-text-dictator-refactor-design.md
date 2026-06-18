@@ -91,8 +91,8 @@ app/
 
 - `UTextarea` for text input
 - `USelect` for voice selection
-- `URange` for speed slider
-- `UInput` for repeat count
+- `USlider` for speed slider
+- `UInputNumber` for repeat count
 - `UCheckbox` for loop toggle
 - `UButton` for action buttons
 
