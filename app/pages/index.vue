@@ -77,7 +77,7 @@ const segments = computed(() => {
   let start = 0
 
   for (let index = 0; index < text.value.length; index++) {
-    const character = text.value[index]
+    const character = text.value[index] || ''
     const isSentenceEnd = '.!?'.includes(character)
     const isLastCharacter = index === text.value.length - 1
 
@@ -87,7 +87,13 @@ const segments = computed(() => {
 
     let end = isLastCharacter ? index + 1 : index + 1
 
-    while (end < text.value.length && /\s/u.test(text.value[end])) {
+    while (end < text.value.length) {
+      const whitespaceCharacter = text.value[end]
+
+      if (!whitespaceCharacter || !/\s/u.test(whitespaceCharacter)) {
+        break
+      }
+
       end++
     }
 
@@ -257,7 +263,11 @@ const loadVoices = () => {
     return
   }
 
-  selectedVoice.value = availableVoices.find(voice => voice.default)?.voiceURI || availableVoices[0].voiceURI
+  const fallbackVoice = availableVoices.find(voice => voice.default) || availableVoices[0]
+
+  if (fallbackVoice) {
+    selectedVoice.value = fallbackVoice.voiceURI
+  }
 }
 
 const setSegmentRef = (element: Element | null, index: number) => {
@@ -269,12 +279,16 @@ const setSegmentRef = (element: Element | null, index: number) => {
   segmentRefs.value[index] = undefined
 }
 
+const setSegmentRefAt = (index: number) => {
+  return (element: Element | null) => setSegmentRef(element, index)
+}
+
 watch([text, mode], () => {
   resetPlayback()
   segmentRefs.value = []
 })
 
-watch(currentIndex, async value => {
+watch(currentIndex, async (value) => {
   if (value === null) {
     return
   }
@@ -287,17 +301,17 @@ watch(currentIndex, async value => {
   })
 })
 
-watch(loopPlayback, enabled => {
+watch(loopPlayback, (enabled) => {
   if (enabled) {
     repeatCount.value = Math.max(repeatCount.value, 1)
   }
 })
 
-watch(rate, value => {
+watch(rate, (value) => {
   rate.value = Math.min(Math.max(value || 0.5, 0.5), 2)
 })
 
-watch(repeatCount, value => {
+watch(repeatCount, (value) => {
   repeatCount.value = Math.min(Math.max(Math.round(value || 1), 1), 25)
 })
 
@@ -431,7 +445,7 @@ onBeforeUnmount(() => {
                   max="2"
                   step="0.1"
                   class="accent-primary"
-                />
+                >
               </label>
 
               <label class="grid gap-2">
@@ -443,7 +457,7 @@ onBeforeUnmount(() => {
                   max="25"
                   class="rounded-2xl border border-(--ui-border) bg-(--ui-bg-elevated) px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                   :disabled="loopPlayback"
-                />
+                >
               </label>
             </div>
 
@@ -452,7 +466,7 @@ onBeforeUnmount(() => {
                 v-model="loopPlayback"
                 type="checkbox"
                 class="size-4 rounded border-(--ui-border) accent-primary"
-              />
+              >
               Loop continuously until you stop playback
             </label>
 
@@ -519,7 +533,7 @@ onBeforeUnmount(() => {
               <span
                 v-for="(segment, index) in segments"
                 :key="`${segment.start}-${segment.end}`"
-                :ref="element => setSegmentRef(element, index)"
+                :ref="setSegmentRefAt(index)"
                 class="dictation-segment"
                 :class="{
                   'dictation-segment--active': currentIndex === index,
