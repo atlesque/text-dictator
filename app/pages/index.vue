@@ -85,7 +85,7 @@ const segments = computed(() => {
       continue
     }
 
-    let end = isLastCharacter ? index + 1 : index + 1
+    let end = index + 1
 
     while (end < text.value.length) {
       const whitespaceCharacter = text.value[end]
