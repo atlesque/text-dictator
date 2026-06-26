@@ -35,11 +35,6 @@ const selectedVoiceName = computed(() => {
         class="grid gap-6 rounded-3xl border border-default bg-elevated/80 p-6 shadow-sm backdrop-blur lg:grid-cols-[1.05fr_0.95fr] lg:p-8"
       >
         <div class="space-y-4">
-          <p
-            class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.3em] text-primary uppercase"
-          >
-            Nuxt UI dictation tool
-          </p>
           <div class="space-y-3">
             <h1 class="text-4xl font-semibold tracking-tight text-highlighted sm:text-5xl">
               Dictate any text your way
