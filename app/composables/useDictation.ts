@@ -22,7 +22,7 @@ const characterNames: Record<string, string> = {
   '!': 'exclamation mark',
   '?': 'question mark',
   '-': 'dash',
-  '_': 'underscore',
+  _: 'underscore',
   '/': 'slash',
   '\\': 'backslash',
   '@': 'at sign',
@@ -120,13 +120,17 @@ export function useDictation() {
   const _rate = ref(1)
   const rate = computed({
     get: () => _rate.value,
-    set: (value) => { _rate.value = Math.min(Math.max(value || 0.5, 0.5), 2) }
+    set: value => {
+      _rate.value = Math.min(Math.max(value || 0.5, 0.5), 2)
+    }
   })
 
   const _repeatCount = ref(1)
   const repeatCount = computed({
     get: () => _repeatCount.value,
-    set: (value) => { _repeatCount.value = Math.min(Math.max(Math.round(value || 1), 1), 25) }
+    set: value => {
+      _repeatCount.value = Math.min(Math.max(Math.round(value || 1), 1), 25)
+    }
   })
 
   const loopPlayback = ref(false)
@@ -238,31 +242,45 @@ export function useDictation() {
     text.value = ''
   }
 
+  // Pick Samantha (Enhanced) as default, then Samantha, then system default
+  function pickDefaultVoice(
+    availableVoices: SpeechSynthesisVoice[]
+  ): SpeechSynthesisVoice | undefined {
+    const samantha = availableVoices.find(v => /^Samantha\b/u.test(v.name))
+    if (samantha) return samantha
+
+    return availableVoices.find(v => v.default) || availableVoices[0]
+  }
+
   // Set initial voice after voices load
-  watch(() => speech.voices.value, (availableVoices) => {
-    if (!availableVoices.length) {
-      selectedVoice.value = ''
-      return
-    }
+  watch(
+    () => speech.voices.value,
+    availableVoices => {
+      if (!availableVoices.length) {
+        selectedVoice.value = ''
+        return
+      }
 
-    const existingVoice = availableVoices.find(v => v.voiceURI === selectedVoice.value)
+      const existingVoice = availableVoices.find(v => v.voiceURI === selectedVoice.value)
 
-    if (existingVoice) {
-      return
-    }
+      if (existingVoice) {
+        return
+      }
 
-    const fallbackVoice = availableVoices.find(v => v.default) || availableVoices[0]
+      const defaultVoice = pickDefaultVoice(availableVoices)
 
-    if (fallbackVoice) {
-      selectedVoice.value = fallbackVoice.voiceURI
-    }
-  }, { immediate: true })
+      if (defaultVoice) {
+        selectedVoice.value = defaultVoice.voiceURI
+      }
+    },
+    { immediate: true }
+  )
 
   watch([text, mode], () => {
     resetPlayback()
   })
 
-  watch(loopPlayback, (enabled) => {
+  watch(loopPlayback, enabled => {
     if (enabled) {
       repeatCount.value = Math.max(repeatCount.value, 1)
     }

@@ -1,6 +1,6 @@
 <!-- app/components/DictationControls.vue -->
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import type { DictationMode } from '~/composables/useDictation'
 
 const props = defineProps<{
@@ -32,6 +32,9 @@ const emit = defineEmits<{
 
 const selectedLanguage = ref('')
 
+// Remember the last voice the user picked for each language
+const lastVoicePerLanguage = reactive<Record<string, string>>({})
+
 const languages = computed(() => {
   return [...new Set(props.voices.map(v => v.lang))].sort()
 })
@@ -40,6 +43,18 @@ const filteredVoices = computed(() => {
   if (!selectedLanguage.value) return props.voices
   return props.voices.filter(v => v.lang === selectedLanguage.value)
 })
+
+// Record voice changes so we can restore them when switching languages
+watch(
+  () => props.selectedVoice,
+  voiceURI => {
+    if (!voiceURI) return
+    const voice = props.voices.find(v => v.voiceURI === voiceURI)
+    if (voice) {
+      lastVoicePerLanguage[voice.lang] = voiceURI
+    }
+  }
+)
 
 watch(
   () => props.voices,
@@ -55,6 +70,21 @@ watch(
 
 watch(selectedLanguage, lang => {
   if (!lang) return
+
+  // Don't override if the current voice already matches this language
+  const currentVoice = props.voices.find(v => v.voiceURI === props.selectedVoice)
+  if (currentVoice?.lang === lang) return
+
+  // Restore the last-used voice for this language, or pick the first available
+  const savedVoiceURI = lastVoicePerLanguage[lang]
+  if (savedVoiceURI) {
+    const savedVoice = props.voices.find(v => v.voiceURI === savedVoiceURI)
+    if (savedVoice) {
+      emit('update:selectedVoice', savedVoice.voiceURI)
+      return
+    }
+  }
+
   const firstVoice = props.voices.find(v => v.lang === lang)
   if (firstVoice) {
     emit('update:selectedVoice', firstVoice.voiceURI)
