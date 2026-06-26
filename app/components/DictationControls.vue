@@ -23,54 +23,50 @@ const emit = defineEmits<{
   'update:repeatCount': [value: number]
   'update:loopPlayback': [value: boolean]
   'update:selectedVoice': [value: string]
-  'start': []
-  'stop': []
-  'reset': []
-  'clear': []
+  start: []
+  stop: []
+  reset: []
+  clear: []
 }>()
 </script>
 
 <template>
-  <div class="rounded-3xl border border-default bg-default/85 p-5 shadow-sm">
-    <div class="grid gap-5">
-      <UTextarea
-        :model-value="text"
-        class="min-h-44"
-        label="Text to dictate"
-        placeholder="Type any text, codes, names, or mixed alphanumeric phrases here."
-        @update:model-value="emit('update:text', $event)"
-      />
+  <div class="rounded-3xl border border-default bg-default/85 p-4 shadow-sm">
+    <div class="grid gap-4">
+      <div class="grid gap-2.5">
+        <span class="text-sm font-medium text-highlighted">Text to dictate</span>
+        <UTextarea
+          :model-value="text"
+          class="[&>textarea]:py-1!"
+          placeholder="Type any text, codes, names, or mixed alphanumeric phrases here."
+          @update:model-value="emit('update:text', $event)"
+        />
+      </div>
 
       <div class="grid gap-4 md:grid-cols-2">
         <div class="grid gap-2">
           <span class="text-sm font-medium text-highlighted">Dictation mode</span>
-          <div class="grid grid-cols-2 gap-2">
-            <UButton
-              :variant="mode === 'characters' ? 'solid' : 'ghost'"
-              :color="mode === 'characters' ? 'primary' : 'neutral'"
-              size="lg"
-              @click="emit('update:mode', 'characters')"
-            >
-              Letters
-            </UButton>
-            <UButton
-              :variant="mode === 'sentences' ? 'solid' : 'ghost'"
-              :color="mode === 'sentences' ? 'primary' : 'neutral'"
-              size="lg"
-              @click="emit('update:mode', 'sentences')"
-            >
-              Sentences
-            </UButton>
-          </div>
+          <UTabs
+            :model-value="mode"
+            :items="[
+              { label: 'Letters', value: 'characters' },
+              { label: 'Sentences', value: 'sentences' }
+            ]"
+            variant="pill"
+            :content="false"
+            @update:model-value="emit('update:mode', $event)"
+          />
         </div>
 
-        <USelect
-          :model-value="selectedVoice"
-          label="Voice"
-          :items="voices.map(v => ({ label: `${v.name} (${v.lang})`, value: v.voiceURI }))"
-          placeholder="System default"
-          @update:model-value="emit('update:selectedVoice', $event)"
-        />
+        <div class="grid gap-2">
+          <span class="text-sm font-medium text-highlighted">Voice</span>
+          <USelect
+            :model-value="selectedVoice"
+            :items="voices.map(v => ({ label: `${v.name} (${v.lang})`, value: v.voiceURI }))"
+            placeholder="System default"
+            @update:model-value="emit('update:selectedVoice', $event)"
+          />
+        </div>
 
         <div class="grid gap-2">
           <div class="flex items-center justify-between gap-3">
@@ -86,14 +82,16 @@ const emit = defineEmits<{
           />
         </div>
 
-        <UInputNumber
-          :model-value="repeatCount"
-          label="Repeat count"
-          :min="1"
-          :max="25"
-          :disabled="loopPlayback"
-          @update:model-value="emit('update:repeatCount', $event ?? 1)"
-        />
+        <div class="grid gap-2">
+          <span class="text-sm font-medium text-highlighted">Repeat count</span>
+          <UInputNumber
+            :model-value="repeatCount"
+            :min="1"
+            :max="25"
+            :disabled="loopPlayback"
+            @update:model-value="emit('update:repeatCount', $event ?? 1)"
+          />
+        </div>
       </div>
 
       <UCheckbox
@@ -103,12 +101,7 @@ const emit = defineEmits<{
       />
 
       <div class="flex flex-wrap gap-3">
-        <UButton
-          icon="i-lucide-play"
-          size="lg"
-          :disabled="!canStart"
-          @click="emit('start')"
-        >
+        <UButton icon="i-lucide-play" size="lg" :disabled="!canStart" @click="emit('start')">
           {{ currentIndex === null ? 'Start dictation' : 'Resume dictation' }}
         </UButton>
         <UButton
@@ -128,12 +121,7 @@ const emit = defineEmits<{
         >
           Reset
         </UButton>
-        <UButton
-          icon="i-lucide-eraser"
-          color="error"
-          variant="outline"
-          @click="emit('clear')"
-        >
+        <UButton icon="i-lucide-eraser" color="error" variant="outline" @click="emit('clear')">
           Clear
         </UButton>
       </div>

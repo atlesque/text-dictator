@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useDictation } from '~/composables/useDictation'
 
 const {
@@ -21,49 +20,14 @@ const {
   resetPlayback,
   clearInput
 } = useDictation()
-
-const selectedVoiceName = computed(() => {
-  const voice = voices.value.find(v => v.voiceURI === selectedVoice.value)
-  return voice?.name || 'System default'
-})
 </script>
 
 <template>
   <main class="min-h-screen bg-default text-default">
-    <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-6">
       <section
-        class="grid gap-6 rounded-3xl border border-default bg-elevated/80 p-6 shadow-sm backdrop-blur lg:grid-cols-[1.05fr_0.95fr] lg:p-8"
+        class="grid gap-4 rounded-3xl border border-default bg-elevated/80 p-4 shadow-sm backdrop-blur lg:p-5"
       >
-        <div class="space-y-4">
-          <div class="space-y-3">
-            <h1 class="text-4xl font-semibold tracking-tight text-highlighted sm:text-5xl">
-              Dictate any text your way
-            </h1>
-            <p class="max-w-2xl text-base leading-7 text-muted sm:text-lg">
-              Switch between character-by-character spelling and sentence playback, choose a voice,
-              tune the speed, and follow every spoken part with a karaoke-style guide.
-            </p>
-          </div>
-          <div class="grid gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl border border-default bg-default/80 p-4">
-              <p class="text-sm text-muted">Current mode</p>
-              <p class="mt-1 text-lg font-semibold text-highlighted">
-                {{ mode === 'characters' ? 'Letters' : 'Sentences' }}
-              </p>
-            </div>
-            <div class="rounded-2xl border border-default bg-default/80 p-4">
-              <p class="text-sm text-muted">Speech rate</p>
-              <p class="mt-1 text-lg font-semibold text-highlighted">{{ rate.toFixed(1) }}x</p>
-            </div>
-            <div class="rounded-2xl border border-default bg-default/80 p-4">
-              <p class="text-sm text-muted">Voice</p>
-              <p class="mt-1 truncate text-lg font-semibold text-highlighted">
-                {{ selectedVoiceName }}
-              </p>
-            </div>
-          </div>
-        </div>
-
         <DictationControls
           :text="text"
           :mode="mode"
@@ -89,7 +53,7 @@ const selectedVoiceName = computed(() => {
         />
       </section>
 
-      <section class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <KaraokePreview
           :segments="segments"
           :current-index="currentIndex"

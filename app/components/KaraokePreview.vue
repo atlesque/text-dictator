@@ -20,27 +20,28 @@ function setSegmentRefAt(index: number) {
   }
 }
 
-watch(() => props.currentIndex, async (value) => {
-  if (value === null) {
-    return
-  }
+watch(
+  () => props.currentIndex,
+  async value => {
+    if (value === null) {
+      return
+    }
 
-  await nextTick()
-  segmentRefs.value[value]?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'nearest',
-    inline: 'center'
-  })
-})
+    await nextTick()
+    segmentRefs.value[value]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center'
+    })
+  }
+)
 </script>
 
 <template>
-  <div class="rounded-3xl border border-default bg-elevated/85 p-6 shadow-sm">
+  <div class="rounded-3xl border border-default bg-elevated/85 p-4 shadow-sm">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-xl font-semibold text-highlighted">
-          Karaoke preview
-        </h2>
+        <h2 class="text-xl font-semibold text-highlighted">Karaoke preview</h2>
         <p class="text-sm text-muted">
           The active letter or sentence is underlined and enlarged while it is being spoken.
         </p>
@@ -50,7 +51,7 @@ watch(() => props.currentIndex, async (value) => {
       </span>
     </div>
 
-    <div class="mt-5 min-h-64 rounded-3xl border border-dashed border-default bg-default/90 p-5">
+    <div class="mt-4 min-h-64 rounded-3xl border border-dashed border-default bg-default/90 p-4">
       <p
         v-if="segments.length"
         class="flex flex-wrap gap-y-3 text-xl leading-9 whitespace-pre-wrap text-highlighted"
@@ -68,10 +69,7 @@ watch(() => props.currentIndex, async (value) => {
           {{ segment.display }}
         </span>
       </p>
-      <p
-        v-else
-        class="flex min-h-52 items-center justify-center text-center text-base text-muted"
-      >
+      <p v-else class="flex min-h-52 items-center justify-center text-center text-base text-muted">
         Paste or type text above to see the karaoke-style guide before you start playback.
       </p>
     </div>
