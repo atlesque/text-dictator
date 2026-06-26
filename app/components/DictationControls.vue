@@ -31,7 +31,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="rounded-3xl border border-(--ui-border) bg-(--ui-bg)/85 p-5 shadow-sm">
+  <div class="rounded-3xl border border-default bg-default/85 p-5 shadow-sm">
     <div class="grid gap-5">
       <UTextarea
         :model-value="text"

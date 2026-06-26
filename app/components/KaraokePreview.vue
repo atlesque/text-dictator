@@ -35,7 +35,7 @@ watch(() => props.currentIndex, async (value) => {
 </script>
 
 <template>
-  <div class="rounded-3xl border border-(--ui-border) bg-(--ui-bg-elevated)/85 p-6 shadow-sm">
+  <div class="rounded-3xl border border-default bg-elevated/85 p-6 shadow-sm">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 class="text-xl font-semibold text-highlighted">
@@ -45,15 +45,15 @@ watch(() => props.currentIndex, async (value) => {
           The active letter or sentence is underlined and enlarged while it is being spoken.
         </p>
       </div>
-      <span class="rounded-full border border-(--ui-border) bg-(--ui-bg) px-3 py-1 text-sm text-muted">
+      <span class="rounded-full border border-default bg-default px-3 py-1 text-sm text-muted">
         {{ progressText }}
       </span>
     </div>
 
-    <div class="mt-5 min-h-64 rounded-3xl border border-dashed border-(--ui-border) bg-(--ui-bg)/90 p-5">
+    <div class="mt-5 min-h-64 rounded-3xl border border-dashed border-default bg-default/90 p-5">
       <p
         v-if="segments.length"
-        class="flex flex-wrap gap-y-3 whitespace-pre-wrap text-xl leading-9 text-highlighted"
+        class="flex flex-wrap gap-y-3 text-xl leading-9 whitespace-pre-wrap text-highlighted"
       >
         <span
           v-for="(segment, index) in segments"

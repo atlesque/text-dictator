@@ -11,12 +11,12 @@ defineProps<{
 <template>
   <div class="grid gap-6">
     <div
-      class="rounded-3xl border border-(--ui-border) bg-(--ui-bg-elevated)/85 p-6 shadow-sm"
+      class="rounded-3xl border border-default bg-elevated/85 p-6 shadow-sm"
     >
       <h2 class="text-xl font-semibold text-highlighted">Playback summary</h2>
       <dl class="mt-4 grid gap-4 text-sm">
         <div
-          class="rounded-2xl border border-(--ui-border) bg-(--ui-bg)/90 p-4"
+          class="rounded-2xl border border-default bg-default/90 p-4"
         >
           <dt class="text-muted">Segments</dt>
           <dd class="mt-1 text-2xl font-semibold text-highlighted">
@@ -24,7 +24,7 @@ defineProps<{
           </dd>
         </div>
         <div
-          class="rounded-2xl border border-(--ui-border) bg-(--ui-bg)/90 p-4"
+          class="rounded-2xl border border-default bg-default/90 p-4"
         >
           <dt class="text-muted">Completed rounds</dt>
           <dd class="mt-1 text-2xl font-semibold text-highlighted">
@@ -32,7 +32,7 @@ defineProps<{
           </dd>
         </div>
         <div
-          class="rounded-2xl border border-(--ui-border) bg-(--ui-bg)/90 p-4"
+          class="rounded-2xl border border-default bg-default/90 p-4"
         >
           <dt class="text-muted">Playback type</dt>
           <dd class="mt-1 text-lg font-semibold text-highlighted">

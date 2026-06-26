@@ -29,11 +29,15 @@ const selectedVoiceName = computed(() => {
 </script>
 
 <template>
-  <main class="min-h-screen bg-(--ui-bg) text-(--ui-text)">
+  <main class="min-h-screen bg-default text-default">
     <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      <section class="grid gap-6 rounded-3xl border border-(--ui-border) bg-(--ui-bg-elevated)/80 p-6 shadow-sm backdrop-blur lg:grid-cols-[1.05fr_0.95fr] lg:p-8">
+      <section
+        class="grid gap-6 rounded-3xl border border-default bg-elevated/80 p-6 shadow-sm backdrop-blur lg:grid-cols-[1.05fr_0.95fr] lg:p-8"
+      >
         <div class="space-y-4">
-          <p class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+          <p
+            class="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold tracking-[0.3em] text-primary uppercase"
+          >
             Nuxt UI dictation tool
           </p>
           <div class="space-y-3">
@@ -41,30 +45,23 @@ const selectedVoiceName = computed(() => {
               Dictate any text your way
             </h1>
             <p class="max-w-2xl text-base leading-7 text-muted sm:text-lg">
-              Switch between character-by-character spelling and sentence playback, choose a voice, tune the speed, and follow every spoken part with a karaoke-style guide.
+              Switch between character-by-character spelling and sentence playback, choose a voice,
+              tune the speed, and follow every spoken part with a karaoke-style guide.
             </p>
           </div>
           <div class="grid gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl border border-(--ui-border) bg-(--ui-bg)/80 p-4">
-              <p class="text-sm text-muted">
-                Current mode
-              </p>
+            <div class="rounded-2xl border border-default bg-default/80 p-4">
+              <p class="text-sm text-muted">Current mode</p>
               <p class="mt-1 text-lg font-semibold text-highlighted">
                 {{ mode === 'characters' ? 'Letters' : 'Sentences' }}
               </p>
             </div>
-            <div class="rounded-2xl border border-(--ui-border) bg-(--ui-bg)/80 p-4">
-              <p class="text-sm text-muted">
-                Speech rate
-              </p>
-              <p class="mt-1 text-lg font-semibold text-highlighted">
-                {{ rate.toFixed(1) }}x
-              </p>
+            <div class="rounded-2xl border border-default bg-default/80 p-4">
+              <p class="text-sm text-muted">Speech rate</p>
+              <p class="mt-1 text-lg font-semibold text-highlighted">{{ rate.toFixed(1) }}x</p>
             </div>
-            <div class="rounded-2xl border border-(--ui-border) bg-(--ui-bg)/80 p-4">
-              <p class="text-sm text-muted">
-                Voice
-              </p>
+            <div class="rounded-2xl border border-default bg-default/80 p-4">
+              <p class="text-sm text-muted">Voice</p>
               <p class="mt-1 truncate text-lg font-semibold text-highlighted">
                 {{ selectedVoiceName }}
               </p>
