@@ -117,7 +117,7 @@ watch(selectedLanguage, lang => {
               ]"
               variant="pill"
               :content="false"
-              @update:model-value="emit('update:mode', $event)"
+              @update:model-value="emit('update:mode', $event as DictationMode)"
             />
           </div>
 
