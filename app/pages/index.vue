@@ -25,9 +25,7 @@ const {
 <template>
   <main class="min-h-screen bg-default text-default">
     <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-6">
-      <section
-        class="grid gap-4 rounded-3xl border border-default bg-elevated/80 p-4 shadow-sm backdrop-blur lg:p-5"
-      >
+      <section class="grid gap-4 lg:grid-cols-2">
         <DictationControls
           :text="text"
           :mode="mode"
@@ -51,16 +49,11 @@ const {
           @reset="resetPlayback"
           @clear="clearInput"
         />
-      </section>
 
-      <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <KaraokePreview
           :segments="segments"
           :current-index="currentIndex"
           :progress-text="progressText"
-        />
-
-        <PlaybackSummary
           :segment-count="segments.length"
           :completed-cycles="completedCycles"
           :loop-playback="loopPlayback"

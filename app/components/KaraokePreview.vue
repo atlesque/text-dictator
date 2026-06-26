@@ -6,6 +6,10 @@ const props = defineProps<{
   segments: Segment[]
   currentIndex: number | null
   progressText: string
+  segmentCount: number
+  completedCycles: number
+  loopPlayback: boolean
+  repeatCount: number
 }>()
 
 const segmentRefs = ref<(HTMLElement | undefined)[]>([])
@@ -38,7 +42,7 @@ watch(
 </script>
 
 <template>
-  <div class="rounded-3xl border border-default bg-elevated/85 p-4 shadow-sm">
+  <div class="rounded-3xl border border-default bg-default/85 p-4 shadow-sm">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 class="text-xl font-semibold text-highlighted">Karaoke preview</h2>
@@ -72,6 +76,16 @@ watch(
       <p v-else class="flex min-h-52 items-center justify-center text-center text-base text-muted">
         Paste or type text above to see the karaoke-style guide before you start playback.
       </p>
+    </div>
+
+    <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+      <span
+        ><strong class="text-default font-semibold">{{ segmentCount }}</strong> segments</span
+      >
+      <span
+        ><strong class="text-default font-semibold">{{ completedCycles }}</strong> rounds</span
+      >
+      <span>{{ loopPlayback ? 'Looping continuously' : `Repeat ${repeatCount}×` }}</span>
     </div>
   </div>
 </template>

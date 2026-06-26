@@ -1,8 +1,9 @@
 <!-- app/components/DictationControls.vue -->
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import type { DictationMode } from '~/composables/useDictation'
 
-defineProps<{
+const props = defineProps<{
   text: string
   mode: DictationMode
   rate: number
@@ -28,6 +29,37 @@ const emit = defineEmits<{
   reset: []
   clear: []
 }>()
+
+const selectedLanguage = ref('')
+
+const languages = computed(() => {
+  return [...new Set(props.voices.map(v => v.lang))].sort()
+})
+
+const filteredVoices = computed(() => {
+  if (!selectedLanguage.value) return props.voices
+  return props.voices.filter(v => v.lang === selectedLanguage.value)
+})
+
+watch(
+  () => props.voices,
+  newVoices => {
+    if (!newVoices.length) return
+
+    // Set initial language from currently selected voice, or first available
+    const currentVoice = newVoices.find(v => v.voiceURI === props.selectedVoice)
+    selectedLanguage.value = currentVoice?.lang || newVoices[0]?.lang || ''
+  },
+  { immediate: true }
+)
+
+watch(selectedLanguage, lang => {
+  if (!lang) return
+  const firstVoice = props.voices.find(v => v.lang === lang)
+  if (firstVoice) {
+    emit('update:selectedVoice', firstVoice.voiceURI)
+  }
+})
 </script>
 
 <template>
@@ -44,53 +76,70 @@ const emit = defineEmits<{
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <div class="grid gap-2">
-          <span class="text-sm font-medium text-highlighted">Dictation mode</span>
-          <UTabs
-            :model-value="mode"
-            :items="[
-              { label: 'Letters', value: 'characters' },
-              { label: 'Sentences', value: 'sentences' }
-            ]"
-            variant="pill"
-            :content="false"
-            @update:model-value="emit('update:mode', $event)"
-          />
-        </div>
-
-        <div class="grid gap-2">
-          <span class="text-sm font-medium text-highlighted">Voice</span>
-          <USelect
-            :model-value="selectedVoice"
-            :items="voices.map(v => ({ label: `${v.name} (${v.lang})`, value: v.voiceURI }))"
-            placeholder="System default"
-            @update:model-value="emit('update:selectedVoice', $event)"
-          />
-        </div>
-
-        <div class="grid gap-2">
-          <div class="flex items-center justify-between gap-3">
-            <span class="text-sm font-medium text-highlighted">Dictation speed</span>
-            <span class="text-sm text-muted">{{ rate.toFixed(1) }}x</span>
+        <div class="grid gap-4">
+          <div class="grid gap-2">
+            <span class="text-sm font-medium text-highlighted">Dictation mode</span>
+            <UTabs
+              :model-value="mode"
+              :items="[
+                { label: 'Letters', value: 'characters' },
+                { label: 'Sentences', value: 'sentences' }
+              ]"
+              variant="pill"
+              :content="false"
+              @update:model-value="emit('update:mode', $event)"
+            />
           </div>
-          <USlider
-            :model-value="rate"
-            :min="0.5"
-            :max="2"
-            :step="0.1"
-            @update:model-value="emit('update:rate', $event ?? 1)"
-          />
+
+          <div class="grid gap-3">
+            <div class="grid gap-1.5">
+              <span class="text-sm font-medium text-highlighted">Language</span>
+              <USelect
+                :model-value="selectedLanguage"
+                :items="languages"
+                placeholder="All languages"
+                @update:model-value="selectedLanguage = $event"
+              />
+            </div>
+            <div class="grid gap-1.5">
+              <span class="text-sm font-medium text-highlighted">Voice</span>
+              <USelect
+                :model-value="selectedVoice"
+                :items="filteredVoices.map(v => ({ label: v.name, value: v.voiceURI }))"
+                placeholder="Select a voice"
+                @update:model-value="emit('update:selectedVoice', $event)"
+              />
+            </div>
+          </div>
         </div>
 
-        <div class="grid gap-2">
-          <span class="text-sm font-medium text-highlighted">Repeat count</span>
-          <UInputNumber
-            :model-value="repeatCount"
-            :min="1"
-            :max="25"
-            :disabled="loopPlayback"
-            @update:model-value="emit('update:repeatCount', $event ?? 1)"
-          />
+        <div class="flex flex-col gap-4">
+          <div>
+            <div class="flex items-center justify-between gap-3">
+              <span class="text-sm font-medium text-highlighted">Dictation speed</span>
+              <span class="text-sm text-muted">{{ rate.toFixed(1) }}x</span>
+            </div>
+            <USlider
+              :model-value="rate"
+              :min="0.5"
+              :max="2"
+              :step="0.1"
+              class="mt-1.5"
+              @update:model-value="emit('update:rate', $event ?? 1)"
+            />
+          </div>
+
+          <div>
+            <span class="block text-sm font-medium text-highlighted">Repeat count</span>
+            <UInputNumber
+              :model-value="repeatCount"
+              :min="1"
+              :max="25"
+              :disabled="loopPlayback"
+              class="mt-1.5"
+              @update:model-value="emit('update:repeatCount', $event ?? 1)"
+            />
+          </div>
         </div>
       </div>
 
