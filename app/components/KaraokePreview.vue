@@ -16,7 +16,7 @@ const progress = computed(() => {
 
 <template>
   <div
-    class="glass-panel visualizer-stage relative order-first h-56 overflow-hidden sm:h-72 lg:order-none lg:h-auto lg:min-h-96"
+    class="glass-panel visualizer-stage relative order-first h-40 min-w-0 overflow-hidden sm:h-64 lg:order-none lg:h-auto lg:min-h-96"
     :class="{ 'visualizer-stage--active': isPlaying }"
   >
     <VoiceVisualizer

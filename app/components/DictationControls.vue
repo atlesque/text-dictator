@@ -93,9 +93,9 @@ watch(selectedLanguage, lang => {
 </script>
 
 <template>
-  <div class="glass-panel p-5 sm:p-6">
-    <div class="grid gap-5">
-      <div class="grid gap-2.5">
+  <div class="glass-panel @container min-w-0 p-4 sm:p-6">
+    <div class="grid min-w-0 gap-5">
+      <div class="grid min-w-0 gap-2.5">
         <span class="field-label">Text to dictate</span>
         <UTextarea
           :model-value="text"
@@ -109,8 +109,9 @@ watch(selectedLanguage, lang => {
         />
       </div>
 
-      <div class="grid gap-5 md:grid-cols-2">
-        <div class="grid content-start gap-4">
+      <!-- Split into two columns only when the panel itself is wide enough -->
+      <div class="grid grid-cols-1 gap-5 @lg:grid-cols-2">
+        <div class="grid min-w-0 content-start gap-4">
           <div class="grid gap-2">
             <span class="field-label">Dictation mode</span>
             <UTabs
@@ -122,9 +123,11 @@ watch(selectedLanguage, lang => {
               variant="pill"
               :content="false"
               :ui="{
-                list: 'rounded-full bg-elevated/60 ring-1 ring-default p-1',
+                root: 'min-w-0',
+                list: 'w-full rounded-full bg-elevated/60 ring-1 ring-default p-1',
                 indicator: 'rounded-full gradient-action',
-                trigger: 'rounded-full data-[state=active]:text-white'
+                trigger: 'min-w-0 flex-1 justify-center rounded-full data-[state=active]:text-white',
+                label: 'truncate'
               }"
               @update:model-value="emit('update:mode', $event as DictationMode)"
             />
@@ -137,7 +140,7 @@ watch(selectedLanguage, lang => {
               :items="languages"
               icon="i-lucide-globe"
               placeholder="All languages"
-              class="w-full"
+              class="w-full min-w-0"
               @update:model-value="selectedLanguage = $event"
             />
           </div>
@@ -148,13 +151,13 @@ watch(selectedLanguage, lang => {
               :items="filteredVoices.map(v => ({ label: v.name, value: v.voiceURI }))"
               icon="i-lucide-audio-lines"
               placeholder="Select a voice"
-              class="w-full"
+              class="w-full min-w-0"
               @update:model-value="emit('update:selectedVoice', $event)"
             />
           </div>
         </div>
 
-        <div class="grid content-start gap-4">
+        <div class="grid min-w-0 content-start gap-4">
           <div class="grid gap-2">
             <div class="flex items-center justify-between gap-3">
               <span class="field-label">Dictation speed</span>
@@ -195,17 +198,17 @@ watch(selectedLanguage, lang => {
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3 border-t border-default pt-5">
+      <div class="flex flex-col gap-3 border-t border-default pt-5 sm:flex-row sm:flex-wrap sm:items-center">
         <UButton
           icon="i-lucide-play"
           size="xl"
-          class="gradient-action rounded-full px-6"
+          class="gradient-action w-full justify-center rounded-full px-6 sm:w-auto"
           :disabled="!canStart"
           @click="emit('start')"
         >
           {{ currentIndex === null ? 'Start dictation' : 'Resume dictation' }}
         </UButton>
-        <div class="flex gap-2">
+        <div class="flex justify-center gap-2">
           <UTooltip text="Stop">
             <UButton
               icon="i-lucide-square"
