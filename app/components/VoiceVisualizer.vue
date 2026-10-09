@@ -7,6 +7,7 @@ const props = defineProps<{
   isPlaying: boolean
   isSpeaking: boolean
   speechText: string
+  hasStarted: boolean
   spokenCharIndex: number
   rate: number
 }>()
@@ -22,10 +23,11 @@ void main() {
 }
 `
 
-// Iridescent light bar. Each of the five strands is one frequency band (low
-// bands are long slow waves, high bands are fine fast ripples) and its height
-// follows that band's energy. Overall amplitude widens the bar outward from
-// the center and grows the orb behind it.
+// Iridescent light bar. Each strand is one frequency band (low bands are long
+// slow waves near the center, high bands are fine fast ripples that reach
+// further out) and its height follows that band's energy. Overall amplitude
+// widens the bar outward from the center and grows the orb behind it, and
+// onsets kick the strands and sharpen them for a moment.
 const fragmentSource = `
 precision highp float;
 
@@ -35,6 +37,7 @@ uniform vec2 uResolution;
 uniform float uTime;
 uniform float uBands[BANDS];
 uniform float uAmplitude;
+uniform float uTransient;
 uniform float uReach;
 uniform float uLight;
 
@@ -83,17 +86,20 @@ void main() {
     for (int i = 0; i < BANDS; i++) {
       float fi = float(i);
       float energy = uBands[i];
-      float amp = (0.008 + 0.22 * energy) * envelope;
-      float frequency = 2.4 + fi * 1.7;
-      float phase = uTime * (0.7 + 0.45 * fi) + fi * 1.9;
+      // Higher bands spread wider, so sibilants ripple out and vowels bulge
+      float bandSpread = spread * (0.8 + 0.09 * fi);
+      float bandEnvelope = exp(-(xn * xn) / (bandSpread * bandSpread));
+      float amp = (0.008 + 0.2 * energy) * bandEnvelope * (1.0 + 0.35 * uTransient);
+      float frequency = 2.2 + fi * 1.25;
+      float phase = uTime * (0.7 + 0.32 * fi) + fi * 1.9;
       float y = amp * sin(xn * frequency + phase) * (0.75 + 0.25 * sin(uTime * 0.6 + fi * 2.3));
       if (i == 0) leading = y;
 
       float d = abs(uv.y - y);
-      float thickness = 0.0016 + 0.0045 * energy * envelope;
+      float thickness = 0.0014 + 0.004 * energy * bandEnvelope;
       float core = exp(-d / thickness);
-      float halo = 0.07 * exp(-d / 0.025) * envelope * (0.25 + energy);
-      color += spectrum(paletteX + (fi - 2.0) * 0.06) * (core * 0.75 + halo) * edgeFade;
+      float halo = 0.05 * exp(-d / 0.025) * bandEnvelope * (0.25 + energy);
+      color += spectrum(paletteX + (fi - 3.0) * 0.045) * (core * (0.65 + 0.35 * uTransient) + halo) * edgeFade;
     }
 
     // Filled ribbon under the low band
@@ -112,7 +118,7 @@ void main() {
     float bandHeight = (0.01 + 0.24 * uAmplitude) * envelope;
     float band = exp(-pow(uv.y / (bandHeight * 1.6 + 0.01), 2.0));
     float twinkle = 0.5 + 0.5 * sin(uTime * (3.0 + drift * 5.0) + h * 40.0);
-    float fizz = 0.25 + uBands[3] + uBands[4];
+    float fizz = 0.25 + uBands[5] + uBands[6] + uTransient;
     color += spectrum(paletteX + (drift - 0.5) * 0.3) * step(0.93, h) * speck * band * twinkle * fizz * edgeFade;
   }
 
@@ -183,7 +189,7 @@ function setup(): boolean {
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0)
   gl.clearColor(0, 0, 0, 0)
 
-  for (const name of ['uResolution', 'uTime', 'uBands', 'uAmplitude', 'uReach', 'uLight']) {
+  for (const name of ['uResolution', 'uTime', 'uBands', 'uAmplitude', 'uTransient', 'uReach', 'uLight']) {
     uniforms[name] = gl.getUniformLocation(program, name)
   }
 
@@ -222,27 +228,29 @@ function render(now: number) {
 function draw(dt: number) {
   if (!gl) return
 
-  const { bands, amplitude } = signal.update(
+  const { bands, amplitude, transient } = signal.update(
     {
       text: props.speechText,
       isSpeaking: props.isSpeaking && props.isPlaying,
+      hasStarted: props.hasStarted,
       rate: props.rate,
       boundaryIndex: props.spokenCharIndex
     },
     dt
   )
 
-  const speed = prefersReducedMotion ? 0.25 : 0.55 + amplitude * 1.4
+  const speed = prefersReducedMotion ? 0.25 : 0.55 + amplitude * 1.4 + transient * 1.2
   elapsed += dt * speed
 
   let loudestBand = 0
   for (const value of bands) loudestBand = Math.max(loudestBand, value)
-  const reach = Math.max(0.008 + 0.22 * loudestBand, 0.01 + 0.24 * amplitude) * 1.6 + 0.08
+  const reach = Math.max((0.008 + 0.2 * loudestBand) * (1 + 0.35 * transient), 0.01 + 0.24 * amplitude) * 1.6 + 0.08
 
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.uniform1f(uniforms.uTime!, elapsed)
   gl.uniform1fv(uniforms.uBands!, bands)
   gl.uniform1f(uniforms.uAmplitude!, amplitude)
+  gl.uniform1f(uniforms.uTransient!, prefersReducedMotion ? 0 : transient)
   gl.uniform1f(uniforms.uReach!, reach)
   gl.uniform1f(uniforms.uLight!, colorMode.value === 'dark' ? 0 : 1)
   gl.drawArrays(gl.TRIANGLES, 0, 3)

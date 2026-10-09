@@ -305,6 +305,7 @@ export function useDictation() {
     currentIndex,
     isPlaying,
     isSpeaking: speech.isSpeaking,
+    hasStarted: speech.hasStarted,
     spokenCharIndex: speech.charIndex,
     currentSpeech,
     completedCycles,

@@ -4,6 +4,7 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 export function useSpeechSynthesis(): {
   voices: Ref<SpeechSynthesisVoice[]>
   isSpeaking: Ref<boolean>
+  hasStarted: Ref<boolean>
   charIndex: Ref<number>
   loadVoices: () => void
   speak: (text: string, rate: number, voiceURI?: string) => Promise<void>
@@ -11,6 +12,8 @@ export function useSpeechSynthesis(): {
 } {
   const voices = ref<SpeechSynthesisVoice[]>([])
   const isSpeaking = ref(false)
+  // Whether audio has actually begun; engines take a moment after speak()
+  const hasStarted = ref(false)
   // Position of the last word boundary the engine reported, where supported
   const charIndex = ref(0)
 
@@ -30,6 +33,7 @@ export function useSpeechSynthesis(): {
   function speak(text: string, rate: number, voiceURI?: string): Promise<void> {
     const clampedRate = Math.max(0.1, Math.min(10, rate))
     isSpeaking.value = true
+    hasStarted.value = false
     charIndex.value = 0
 
     return new Promise((resolve, reject) => {
@@ -42,6 +46,10 @@ export function useSpeechSynthesis(): {
         if (voice) {
           utterance.voice = voice
         }
+      }
+
+      utterance.onstart = () => {
+        hasStarted.value = true
       }
 
       utterance.onboundary = event => {
@@ -90,6 +98,7 @@ export function useSpeechSynthesis(): {
   return {
     voices,
     isSpeaking,
+    hasStarted,
     charIndex,
     loadVoices,
     speak,
