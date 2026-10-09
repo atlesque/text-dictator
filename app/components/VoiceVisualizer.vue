@@ -68,13 +68,14 @@ void main() {
   float ay = abs(uv.y);
   color += spectrum(paletteX) * (exp(-ay / 0.0016) * 0.55 + exp(-ay / 0.02) * 0.08) * edgeFade;
 
-  // Orb at the center, larger and brighter with amplitude
+  // Orb at the center, larger and brighter with amplitude. Kept tight and dim
+  // so the strands stand out against it rather than sinking into a haze.
   vec2 orbUv = uv * vec2(0.85, 1.0);
-  float orbRadius = 0.025 + 0.17 * uAmplitude;
+  float orbRadius = 0.02 + 0.08 * uAmplitude;
   float orbDist = length(orbUv);
-  float orb = exp(-max(orbDist - orbRadius, 0.0) / (0.03 + 0.06 * uAmplitude));
+  float orb = exp(-max(orbDist - orbRadius, 0.0) / (0.02 + 0.03 * uAmplitude));
   float orbFill = smoothstep(orbRadius, 0.0, orbDist);
-  color += spectrum(0.45 + 0.1 * sin(uTime * 0.3)) * (orb * (0.06 + 0.3 * uAmplitude) + orbFill * 0.12 * uAmplitude);
+  color += spectrum(0.45 + 0.1 * sin(uTime * 0.3)) * (orb * (0.04 + 0.16 * uAmplitude) + orbFill * 0.06 * uAmplitude);
 
   // Strands and sparkles only live near the band, so skip the work elsewhere
   if (ay < uReach) {
@@ -91,7 +92,7 @@ void main() {
       float d = abs(uv.y - y);
       float thickness = 0.0016 + 0.0045 * energy * envelope;
       float core = exp(-d / thickness);
-      float halo = 0.12 * exp(-d / 0.035) * envelope * (0.25 + energy);
+      float halo = 0.07 * exp(-d / 0.025) * envelope * (0.25 + energy);
       color += spectrum(paletteX + (fi - 2.0) * 0.06) * (core * 0.75 + halo) * edgeFade;
     }
 

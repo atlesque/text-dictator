@@ -46,7 +46,7 @@ const progress = computed(() => {
 <style scoped>
 .visualizer-stage {
   background:
-    radial-gradient(120% 80% at 50% 50%, rgb(76 54 255 / 0.1), transparent 60%),
+    radial-gradient(120% 80% at 50% 50%, rgb(76 54 255 / 0.04), transparent 60%),
     var(--stage-bg);
 }
 
@@ -56,11 +56,11 @@ const progress = computed(() => {
   inset: 0;
   pointer-events: none;
   border-radius: inherit;
-  box-shadow: inset 0 0 80px rgb(120 90 255 / 0.12);
+  box-shadow: inset 0 0 80px rgb(120 90 255 / 0.06);
   transition: box-shadow 600ms ease;
 }
 
 .visualizer-stage--active::after {
-  box-shadow: inset 0 0 120px rgb(150 100 255 / 0.28);
+  box-shadow: inset 0 0 120px rgb(150 100 255 / 0.12);
 }
 </style>
