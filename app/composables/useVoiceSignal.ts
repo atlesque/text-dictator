@@ -9,13 +9,14 @@
 //    seven bands (voicing, two first-formant bands, two second-formant bands,
 //    frication and sibilance) and a typical duration.
 // 2. A playhead walks that timeline at the speaking rate. Word boundary events
-//    from the engine re-sync it, adapt its tempo to the voice's real pace and
-//    hold each word's onset until the engine reaches it.
+//    from the engine snap it to the word being spoken and adapt its tempo to
+//    the voice's real pace. Voices that send no boundaries are calibrated from
+//    how long each utterance really took, so later sentences stay in step.
 // 3. Within a phoneme the level follows its articulation: stops close to
 //    near-silence and then burst, and vowels glide into the next sound.
-// 4. Each band runs through an envelope follower (fast attack, short release,
-//    as in a peak meter) and then a lightly underdamped spring, which keeps
-//    onsets quick but lets the motion overshoot a touch so it feels alive.
+// 4. The model is read slightly ahead of the playhead to cancel the smoothing
+//    and frame delay, then each band runs through an envelope follower (fast
+//    attack, short release, as in a peak meter) and a stiff spring.
 // 5. Onsets are measured as positive spectral flux of the target, giving a
 //    transient pulse that the visualizer uses for sharp kicks.
 
@@ -241,21 +242,25 @@ export function tokenize(text: string): Unit[] {
 
 export interface VoiceSignalInput {
   text: string
+  isPlaying: boolean
   isSpeaking: boolean
   hasStarted: boolean
   rate: number
   boundaryIndex: number
 }
 
-const ATTACK = 0.008
-const RELEASE = 0.055
-const SPRING_OMEGA = 40
-const SPRING_DAMPING = 0.62
-const TRANSIENT_DECAY = 0.075
+const ATTACK = 0.006
+const RELEASE = 0.045
+const SPRING_OMEGA = 60
+const SPRING_DAMPING = 0.75
+const TRANSIENT_DECAY = 0.06
+// How far ahead of the playhead the model is read, in seconds of speech, to
+// make up for the follower, spring and frame latency
+const LOOKAHEAD = 0.04
+// Silence engines add around an utterance, in seconds
+const UTTERANCE_PADDING = 0.1
 // Without an onstart event, assume the voice has begun after this long
 const START_FALLBACK = 0.35
-// How long a word onset waits for the engine's boundary before moving on
-const ONSET_HOLD = 0.3
 
 export function createVoiceSignal() {
   const target = new Float32Array(BAND_COUNT)
@@ -264,8 +269,6 @@ export function createVoiceSignal() {
   const position = new Float32Array(BAND_COUNT)
   const velocity = new Float32Array(BAND_COUNT)
   const bands = new Float32Array(BAND_COUNT)
-  let amplitude = 0
-  let amplitudeVelocity = 0
   let transient = 0
 
   let text = ''
@@ -275,9 +278,9 @@ export function createVoiceSignal() {
   let lastBoundary = 0
   let lastBoundaryTime = 0
   let lastBoundaryWall = -1
-  let seenBoundary = false
   let speakingFor = 0
-  let held = 0
+  let voicedFor = 0
+  let wasSpeaking = false
   let lastUnit = -1
   let tail = 0
   let time = 0
@@ -287,9 +290,8 @@ export function createVoiceSignal() {
     lastBoundary = 0
     lastBoundaryTime = 0
     lastBoundaryWall = -1
-    seenBoundary = false
     speakingFor = 0
-    held = 0
+    voicedFor = 0
     lastUnit = -1
     tail = 0
   }
@@ -302,12 +304,9 @@ export function createVoiceSignal() {
     return k
   }
 
-  function wordStartAfter(t: number): number | null {
-    for (let k = 1; k < units.length; k++) {
-      const unit = units[k]
-      if (unit && unit.start > t + 1e-6 && unit.kind !== 'gap' && units[k - 1]?.kind === 'gap') return unit.start
-    }
-    return null
+  function totalDuration(): number {
+    const last = units[units.length - 1]
+    return last ? last.start + last.duration : 0
   }
 
   function onBoundary(charIndex: number) {
@@ -318,17 +317,33 @@ export function createVoiceSignal() {
       // Learn how fast this voice really speaks compared to the model
       const wall = now - lastBoundaryWall
       const implied = (unit.start - lastBoundaryTime) / Math.max(wall, 0.01)
-      if (implied > 0.4 && implied < 2.5) tempo += (implied - tempo) * 0.5
+      if (implied > 0.4 && implied < 2.5) tempo += (implied - tempo) * 0.35
     }
     lastBoundaryTime = unit.start
     lastBoundaryWall = now
-    seenBoundary = true
-    held = 0
+    // The engine knows where it is, the model only guesses
     playhead = unit.start
+  }
+
+  // An utterance that ran to its end tells how fast this voice really is
+  // compared to the model, which matters most for voices without boundaries
+  function calibrate(rate: number) {
+    // Single letters are mostly the engine's own padding, so skip them
+    const total = totalDuration()
+    if (total < 0.6) return
+    const implied = total / (Math.max(voicedFor - UTTERANCE_PADDING, 0.1) * rate)
+    if (implied > 0.4 && implied < 2.5) tempo += (implied - tempo) * 0.6
   }
 
   function update(input: VoiceSignalInput, dt: number) {
     time += dt
+
+    const rate = Math.max(input.rate, 0.1)
+
+    // Speech that stopped while playback goes on ended by itself rather than
+    // being cancelled, so its length is real
+    if (wasSpeaking && !input.isSpeaking && input.isPlaying) calibrate(rate)
+    wasSpeaking = input.isSpeaking
 
     if (input.text !== text) {
       text = input.text
@@ -337,8 +352,7 @@ export function createVoiceSignal() {
     }
 
     if (!input.isSpeaking) {
-      speakingFor = 0
-      if (playhead > 0 || lastUnit >= 0) reset()
+      if (playhead > 0 || lastUnit >= 0 || speakingFor > 0) reset()
     } else {
       speakingFor += dt
     }
@@ -351,30 +365,20 @@ export function createVoiceSignal() {
     previousTarget.set(target)
     target.fill(0)
     const voiceOn = input.isSpeaking && (input.hasStarted || speakingFor > START_FALLBACK) && units.length > 0
-    const total = units.length ? (units[units.length - 1]?.start ?? 0) + (units[units.length - 1]?.duration ?? 0) : 0
+    const total = totalDuration()
 
     if (voiceOn) {
-      const rate = Math.max(input.rate, 0.1)
-      let next = playhead + dt * rate * tempo
+      voicedFor += dt
+      playhead += dt * rate * tempo
+      const reading = playhead + LOOKAHEAD * rate * tempo
 
-      // Once the engine reports boundaries, hold each word onset until it
-      // arrives so onsets land on the real ones
-      if (seenBoundary) {
-        const onset = wordStartAfter(lastBoundaryTime)
-        if (onset !== null && next >= onset) {
-          held += dt
-          if (held < ONSET_HOLD) next = Math.min(next, onset - 1e-4)
-        }
-      }
-      playhead = Math.max(playhead, next)
-
-      if (playhead < total) {
+      if (reading < total) {
         tail = 0
-        const k = unitAt(playhead)
+        const k = unitAt(reading)
         const unit = units[k]
         if (unit) {
           lastUnit = k
-          const phase = Math.min(1, (playhead - unit.start) / unit.duration)
+          const phase = Math.min(1, (reading - unit.start) / unit.duration)
           let level = unit.gain
           const from = unit.profile
           let to: Profile | null = unit.glideTo
@@ -411,7 +415,7 @@ export function createVoiceSignal() {
 
       // Micro variation so even a held vowel breathes, per band
       for (let i = 0; i < BAND_COUNT; i++) {
-        const shimmer = 1 + 0.07 * Math.sin(time * (5.3 + i * 1.37) + i * 2.1) * Math.sin(time * (2.1 + i * 0.6))
+        const shimmer = 1 + 0.04 * Math.sin(time * (5.3 + i * 1.37) + i * 2.1) * Math.sin(time * (2.1 + i * 0.6))
         target[i] = (target[i] ?? 0) * shimmer
       }
     }
@@ -428,14 +432,11 @@ export function createVoiceSignal() {
     // Envelope follower then spring, per band
     const attack = 1 - Math.exp(-dt / ATTACK)
     const release = 1 - Math.exp(-dt / RELEASE)
-    let loudness = 0
     for (let i = 0; i < BAND_COUNT; i++) {
       const goal = target[i] ?? 0
       const current = envelope[i] ?? 0
       envelope[i] = current + (goal - current) * (goal > current ? attack : release)
-      loudness += (envelope[i] ?? 0) * (i < 4 ? 1.15 : 0.75)
     }
-    loudness = Math.min(1, loudness / 4.2)
 
     // Integrate the springs in small steps so large frame gaps stay stable
     const steps = Math.max(1, Math.ceil(dt * 240))
@@ -448,14 +449,16 @@ export function createVoiceSignal() {
         velocity[i] = v + accel * h
         position[i] = x + (velocity[i] ?? 0) * h
       }
-      const accel = 30 * 30 * (loudness - amplitude) - 2 * 0.72 * 30 * amplitudeVelocity
-      amplitudeVelocity += accel * h
-      amplitude += amplitudeVelocity * h
     }
 
-    for (let i = 0; i < BAND_COUNT; i++) bands[i] = Math.max(0, Math.min(1.2, position[i] ?? 0))
+    // Loudness comes from the same smoothed bands, so it never trails them
+    let loudness = 0
+    for (let i = 0; i < BAND_COUNT; i++) {
+      bands[i] = Math.max(0, Math.min(1.2, position[i] ?? 0))
+      loudness += (bands[i] ?? 0) * (i < 4 ? 1.15 : 0.75)
+    }
 
-    return { bands, amplitude: Math.max(0, Math.min(1.1, amplitude)), transient }
+    return { bands, amplitude: Math.min(1.1, loudness / 4.2), transient }
   }
 
   return { update }
