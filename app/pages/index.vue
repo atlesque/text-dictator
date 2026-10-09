@@ -23,6 +23,7 @@ const {
 
 <template>
   <main class="relative z-10 text-default">
+    <h1 class="sr-only">Text Dictator: hear any text read aloud, letter by letter or sentence by sentence</h1>
     <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <section class="grid gap-4 lg:grid-cols-2">
         <DictationControls
