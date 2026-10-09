@@ -3,6 +3,10 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   isPlaying: boolean
+  isSpeaking: boolean
+  speechText: string
+  spokenCharIndex: number
+  rate: number
   currentIndex: number | null
   segmentCount: number
   progressText: string
@@ -22,8 +26,10 @@ const progress = computed(() => {
     <VoiceVisualizer
       class="absolute inset-0"
       :is-playing="isPlaying"
-      :current-index="currentIndex"
-      :segment-count="segmentCount"
+      :is-speaking="isSpeaking"
+      :speech-text="speechText"
+      :spoken-char-index="spokenCharIndex"
+      :rate="rate"
     />
 
     <div class="absolute inset-x-10 bottom-6 h-px overflow-hidden rounded-full bg-black/5 dark:bg-white/10">

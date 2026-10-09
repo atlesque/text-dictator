@@ -12,6 +12,9 @@ const {
   segments,
   currentIndex,
   isPlaying,
+  isSpeaking,
+  spokenCharIndex,
+  currentSpeech,
   canStart,
   progressText,
   startPlayback,
@@ -51,6 +54,10 @@ const {
 
         <KaraokePreview
           :is-playing="isPlaying"
+          :is-speaking="isSpeaking"
+          :speech-text="currentSpeech"
+          :spoken-char-index="spokenCharIndex"
+          :rate="rate"
           :current-index="currentIndex"
           :segment-count="segments.length"
           :progress-text="progressText"
