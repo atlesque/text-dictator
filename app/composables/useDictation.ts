@@ -115,7 +115,7 @@ export function useDictation() {
   const sampleText = 'Agent 47 arrives at Gate B12. Boarding starts in 15 minutes!'
 
   const text = ref(sampleText)
-  const mode = ref<DictationMode>('characters')
+  const mode = ref<DictationMode>('sentences')
 
   const _rate = ref(1)
   const rate = computed({

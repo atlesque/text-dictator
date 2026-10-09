@@ -194,10 +194,16 @@ function resize() {
   if (!element || !gl) return
   // The glow is soft, so rendering above 1.5x density costs fill rate for no visible gain
   const ratio = Math.min(window.devicePixelRatio || 1, 1.5)
-  element.width = Math.max(1, Math.round(element.clientWidth * ratio))
-  element.height = Math.max(1, Math.round(element.clientHeight * ratio))
-  gl.viewport(0, 0, element.width, element.height)
-  gl.uniform2f(uniforms.uResolution!, element.width, element.height)
+  const width = Math.max(1, Math.round(element.clientWidth * ratio))
+  const height = Math.max(1, Math.round(element.clientHeight * ratio))
+  if (width === element.width && height === element.height) return
+  // Assigning the size clears the canvas, and the observer fires after this
+  // frame's animation callback, so draw again now or the frame paints blank
+  element.width = width
+  element.height = height
+  gl.viewport(0, 0, width, height)
+  gl.uniform2f(uniforms.uResolution!, width, height)
+  draw(0)
 }
 
 function render(now: number) {
@@ -209,6 +215,11 @@ function render(now: number) {
 
   const dt = Math.min((now - (lastTime || now)) / 1000, 0.1)
   lastTime = now
+  draw(dt)
+}
+
+function draw(dt: number) {
+  if (!gl) return
 
   const { bands, amplitude } = signal.update(
     {

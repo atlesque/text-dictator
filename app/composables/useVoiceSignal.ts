@@ -110,17 +110,17 @@ export function createVoiceSignal() {
     for (let i = 0; i < BAND_COUNT; i++) {
       const goal = (target[i] ?? 0) * gain
       const current = raw[i] ?? 0
-      const tau = goal > current ? 0.14 : 0.4
+      const tau = goal > current ? 0.06 : 0.22
       raw[i] = current + (goal - current) * (1 - Math.exp(-dt / tau))
-      eased[i] = (eased[i] ?? 0) + ((raw[i] ?? 0) - (eased[i] ?? 0)) * (1 - Math.exp(-dt / 0.18))
+      eased[i] = (eased[i] ?? 0) + ((raw[i] ?? 0) - (eased[i] ?? 0)) * (1 - Math.exp(-dt / 0.06))
       bands[i] = eased[i] ?? 0
       sum += (bands[i] ?? 0) * (i < 3 ? 1.2 : 0.8)
     }
 
     const loudness = Math.min(1, sum / 3.2)
-    const ampTau = loudness > amplitude ? 0.16 : 0.45
+    const ampTau = loudness > amplitude ? 0.07 : 0.25
     amplitude += (loudness - amplitude) * (1 - Math.exp(-dt / ampTau))
-    amplitudeEased += (amplitude - amplitudeEased) * (1 - Math.exp(-dt / 0.2))
+    amplitudeEased += (amplitude - amplitudeEased) * (1 - Math.exp(-dt / 0.07))
 
     return { bands, amplitude: amplitudeEased }
   }
