@@ -7,7 +7,7 @@ Nuxt 4 + Nuxt UI single-page app for dictating any text back to the user.
 - Letter-by-letter or sentence-by-sentence dictation
 - Adjustable speech rate and voice
 - Repeat counts or continuous looping
-- Karaoke-style active text indicator
+- Light-bar visualizer that reacts to the dictated text
 - Reset and clear controls
 
 ## Development
@@ -24,3 +24,7 @@ pnpm lint
 pnpm typecheck
 pnpm build
 ```
+
+## SEO
+
+Canonical, Open Graph, robots.txt and sitemap URLs use `https://text-dictator.atlesque.dev` by default. Set `NUXT_PUBLIC_SITE_URL` at build time when the app is served from another domain.
