@@ -2,7 +2,7 @@
 // Production origin, used for canonical, Open Graph and sitemap URLs.
 // Override with NUXT_PUBLIC_SITE_URL when deploying to another domain.
 const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env
-const siteUrl = (env?.NUXT_PUBLIC_SITE_URL || 'https://text-dictator.pages.dev').replace(/\/$/, '')
+const siteUrl = (env?.NUXT_PUBLIC_SITE_URL || 'https://text-dictator.atlesque.dev').replace(/\/$/, '')
 
 const seo = {
   name: 'Text Dictator',

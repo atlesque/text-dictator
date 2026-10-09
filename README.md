@@ -27,4 +27,4 @@ pnpm build
 
 ## SEO
 
-Canonical, Open Graph, robots.txt and sitemap URLs use `https://text-dictator.pages.dev` by default. Set `NUXT_PUBLIC_SITE_URL` at build time when the app is served from another domain.
+Canonical, Open Graph, robots.txt and sitemap URLs use `https://text-dictator.atlesque.dev` by default. Set `NUXT_PUBLIC_SITE_URL` at build time when the app is served from another domain.
