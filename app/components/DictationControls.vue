@@ -93,116 +93,154 @@ watch(selectedLanguage, lang => {
 </script>
 
 <template>
-  <div class="rounded-3xl border border-default bg-default/85 p-4 shadow-sm">
-    <div class="grid gap-4">
+  <div class="glass-panel p-5 sm:p-6">
+    <div class="grid gap-5">
       <div class="grid gap-2.5">
-        <span class="text-sm font-medium text-highlighted">Text to dictate</span>
+        <span class="field-label">Text to dictate</span>
         <UTextarea
           :model-value="text"
-          class="[&>textarea]:py-1!"
+          :rows="4"
+          autoresize
+          variant="none"
+          class="w-full rounded-xl bg-elevated/50 ring-1 ring-default transition focus-within:ring-primary/60 focus-within:shadow-[0_0_0_4px_rgb(139_92_246/0.15)]"
+          :ui="{ base: 'text-base py-3 px-4' }"
           placeholder="Type any text, codes, names, or mixed alphanumeric phrases here."
           @update:model-value="emit('update:text', $event)"
         />
       </div>
 
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="grid gap-4">
+      <div class="grid gap-5 md:grid-cols-2">
+        <div class="grid content-start gap-4">
           <div class="grid gap-2">
-            <span class="text-sm font-medium text-highlighted">Dictation mode</span>
+            <span class="field-label">Dictation mode</span>
             <UTabs
               :model-value="mode"
               :items="[
-                { label: 'Letters', value: 'characters' },
-                { label: 'Sentences', value: 'sentences' }
+                { label: 'Letters', value: 'characters', icon: 'i-lucide-case-sensitive' },
+                { label: 'Sentences', value: 'sentences', icon: 'i-lucide-text' }
               ]"
               variant="pill"
               :content="false"
+              :ui="{
+                list: 'rounded-full bg-elevated/60 ring-1 ring-default p-1',
+                indicator: 'rounded-full gradient-action',
+                trigger: 'rounded-full data-[state=active]:text-white'
+              }"
               @update:model-value="emit('update:mode', $event as DictationMode)"
             />
           </div>
 
-          <div class="grid gap-3">
-            <div class="grid gap-1.5">
-              <span class="text-sm font-medium text-highlighted">Language</span>
-              <USelect
-                :model-value="selectedLanguage"
-                :items="languages"
-                placeholder="All languages"
-                @update:model-value="selectedLanguage = $event"
-              />
-            </div>
-            <div class="grid gap-1.5">
-              <span class="text-sm font-medium text-highlighted">Voice</span>
-              <USelect
-                :model-value="selectedVoice"
-                :items="filteredVoices.map(v => ({ label: v.name, value: v.voiceURI }))"
-                placeholder="Select a voice"
-                @update:model-value="emit('update:selectedVoice', $event)"
-              />
-            </div>
+          <div class="grid gap-2">
+            <span class="field-label">Language</span>
+            <USelect
+              :model-value="selectedLanguage"
+              :items="languages"
+              icon="i-lucide-globe"
+              placeholder="All languages"
+              class="w-full"
+              @update:model-value="selectedLanguage = $event"
+            />
+          </div>
+          <div class="grid gap-2">
+            <span class="field-label">Voice</span>
+            <USelect
+              :model-value="selectedVoice"
+              :items="filteredVoices.map(v => ({ label: v.name, value: v.voiceURI }))"
+              icon="i-lucide-audio-lines"
+              placeholder="Select a voice"
+              class="w-full"
+              @update:model-value="emit('update:selectedVoice', $event)"
+            />
           </div>
         </div>
 
-        <div class="flex flex-col gap-4">
-          <div>
+        <div class="grid content-start gap-4">
+          <div class="grid gap-2">
             <div class="flex items-center justify-between gap-3">
-              <span class="text-sm font-medium text-highlighted">Dictation speed</span>
-              <span class="text-sm text-muted">{{ rate.toFixed(1) }}x</span>
+              <span class="field-label">Dictation speed</span>
+              <span class="font-mono text-sm tabular-nums gradient-text">{{ rate.toFixed(1) }}x</span>
             </div>
             <USlider
               :model-value="rate"
               :min="0.5"
               :max="2"
               :step="0.1"
-              class="mt-1.5"
+              class="py-2"
+              :ui="{
+                range: 'bg-linear-to-r from-violet-500 via-indigo-500 to-fuchsia-500',
+                thumb: 'ring-primary bg-white shadow-[0_0_12px_rgb(139_92_246/0.8)]'
+              }"
               @update:model-value="emit('update:rate', $event ?? 1)"
             />
           </div>
 
-          <div>
-            <span class="block text-sm font-medium text-highlighted">Repeat count</span>
+          <div class="grid gap-2">
+            <span class="field-label">Repeat count</span>
             <UInputNumber
               :model-value="repeatCount"
               :min="1"
               :max="25"
               :disabled="loopPlayback"
-              class="mt-1.5"
+              class="w-full"
               @update:model-value="emit('update:repeatCount', $event ?? 1)"
             />
           </div>
+
+          <USwitch
+            :model-value="loopPlayback"
+            label="Loop continuously"
+            description="Keep repeating until you stop playback"
+            @update:model-value="emit('update:loopPlayback', $event === true)"
+          />
         </div>
       </div>
 
-      <UCheckbox
-        :model-value="loopPlayback"
-        label="Loop continuously until you stop playback"
-        @update:model-value="emit('update:loopPlayback', $event === true)"
-      />
-
-      <div class="flex flex-wrap gap-3">
-        <UButton icon="i-lucide-play" size="lg" :disabled="!canStart" @click="emit('start')">
+      <div class="flex flex-wrap items-center gap-3 border-t border-default pt-5">
+        <UButton
+          icon="i-lucide-play"
+          size="xl"
+          class="gradient-action rounded-full px-6"
+          :disabled="!canStart"
+          @click="emit('start')"
+        >
           {{ currentIndex === null ? 'Start dictation' : 'Resume dictation' }}
         </UButton>
-        <UButton
-          icon="i-lucide-square"
-          color="neutral"
-          variant="subtle"
-          :disabled="!isPlaying"
-          @click="emit('stop')"
-        >
-          Stop
-        </UButton>
-        <UButton
-          icon="i-lucide-rotate-ccw"
-          color="neutral"
-          variant="outline"
-          @click="emit('reset')"
-        >
-          Reset
-        </UButton>
-        <UButton icon="i-lucide-eraser" color="error" variant="outline" @click="emit('clear')">
-          Clear
-        </UButton>
+        <div class="flex gap-2">
+          <UTooltip text="Stop">
+            <UButton
+              icon="i-lucide-square"
+              color="neutral"
+              variant="soft"
+              size="xl"
+              class="rounded-full"
+              aria-label="Stop"
+              :disabled="!isPlaying"
+              @click="emit('stop')"
+            />
+          </UTooltip>
+          <UTooltip text="Reset">
+            <UButton
+              icon="i-lucide-rotate-ccw"
+              color="neutral"
+              variant="soft"
+              size="xl"
+              class="rounded-full"
+              aria-label="Reset"
+              @click="emit('reset')"
+            />
+          </UTooltip>
+          <UTooltip text="Clear text">
+            <UButton
+              icon="i-lucide-eraser"
+              color="error"
+              variant="soft"
+              size="xl"
+              class="rounded-full"
+              aria-label="Clear text"
+              @click="emit('clear')"
+            />
+          </UTooltip>
+        </div>
       </div>
     </div>
   </div>
