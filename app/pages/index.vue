@@ -13,6 +13,7 @@ const {
   currentIndex,
   isPlaying,
   isSpeaking,
+  hasStarted,
   spokenCharIndex,
   currentSpeech,
   canStart,
@@ -56,6 +57,7 @@ const {
         <KaraokePreview
           :is-playing="isPlaying"
           :is-speaking="isSpeaking"
+          :has-started="hasStarted"
           :speech-text="currentSpeech"
           :spoken-char-index="spokenCharIndex"
           :rate="rate"

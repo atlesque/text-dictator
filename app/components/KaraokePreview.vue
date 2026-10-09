@@ -4,6 +4,7 @@ import { computed } from 'vue'
 const props = defineProps<{
   isPlaying: boolean
   isSpeaking: boolean
+  hasStarted: boolean
   speechText: string
   spokenCharIndex: number
   rate: number
@@ -27,6 +28,7 @@ const progress = computed(() => {
       class="absolute inset-0"
       :is-playing="isPlaying"
       :is-speaking="isSpeaking"
+      :has-started="hasStarted"
       :speech-text="speechText"
       :spoken-char-index="spokenCharIndex"
       :rate="rate"
