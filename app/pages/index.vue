@@ -12,7 +12,6 @@ const {
   segments,
   currentIndex,
   isPlaying,
-  completedCycles,
   canStart,
   progressText,
   startPlayback,
@@ -23,8 +22,8 @@ const {
 </script>
 
 <template>
-  <main class="min-h-screen bg-default text-default">
-    <div class="mx-auto flex min-h-screen max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-6">
+  <main class="relative z-10 text-default">
+    <div class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <section class="grid gap-4 lg:grid-cols-2">
         <DictationControls
           :text="text"
@@ -51,13 +50,10 @@ const {
         />
 
         <KaraokePreview
-          :segments="segments"
+          :is-playing="isPlaying"
           :current-index="currentIndex"
-          :progress-text="progressText"
           :segment-count="segments.length"
-          :completed-cycles="completedCycles"
-          :loop-playback="loopPlayback"
-          :repeat-count="repeatCount"
+          :progress-text="progressText"
         />
       </section>
     </div>

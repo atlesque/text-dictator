@@ -35,7 +35,7 @@ const items = computed<DropdownMenuItem[]>(() =>
 <template>
   <ClientOnly>
     <UDropdownMenu :items="items" :content="{ align: 'end' }" :ui="{ content: 'w-40' }">
-      <UButton color="neutral" variant="ghost" :icon="currentIcon" size="sm" class="gap-1.5">
+      <UButton color="neutral" variant="ghost" :icon="currentIcon" size="sm" class="gap-1.5 rounded-full">
         <span class="hidden sm:inline text-sm">Theme</span>
       </UButton>
     </UDropdownMenu>

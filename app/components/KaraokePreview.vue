@@ -1,119 +1,60 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
-import type { Segment } from '~/composables/useDictation'
+import { computed } from 'vue'
 
 const props = defineProps<{
-  segments: Segment[]
+  isPlaying: boolean
   currentIndex: number | null
-  progressText: string
   segmentCount: number
-  completedCycles: number
-  loopPlayback: boolean
-  repeatCount: number
+  progressText: string
 }>()
 
-const segmentRefs = ref<(HTMLElement | undefined)[]>([])
-
-function setSegmentRefAt(index: number) {
-  return (element: Element | null) => {
-    if (element instanceof HTMLElement) {
-      segmentRefs.value[index] = element
-    } else {
-      segmentRefs.value[index] = undefined
-    }
-  }
-}
-
-watch(
-  () => props.currentIndex,
-  async value => {
-    if (value === null) {
-      return
-    }
-
-    await nextTick()
-    segmentRefs.value[value]?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center'
-    })
-  }
-)
+const progress = computed(() => {
+  if (props.currentIndex === null || !props.segmentCount) return 0
+  return ((props.currentIndex + 1) / props.segmentCount) * 100
+})
 </script>
 
 <template>
-  <div class="rounded-3xl border border-default bg-default/85 p-4 shadow-sm">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h2 class="text-xl font-semibold text-highlighted">Karaoke preview</h2>
-        <p class="text-sm text-muted">
-          The active letter or sentence is underlined and enlarged while it is being spoken.
-        </p>
-      </div>
-      <span class="rounded-full border border-default bg-default px-3 py-1 text-sm text-muted">
-        {{ progressText }}
-      </span>
+  <div
+    class="glass-panel visualizer-stage relative order-first h-56 overflow-hidden sm:h-72 lg:order-none lg:h-auto lg:min-h-96"
+    :class="{ 'visualizer-stage--active': isPlaying }"
+  >
+    <VoiceVisualizer
+      class="absolute inset-0"
+      :is-playing="isPlaying"
+      :current-index="currentIndex"
+      :segment-count="segmentCount"
+    />
+
+    <div class="absolute inset-x-10 bottom-6 h-px overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
+      <div
+        class="h-full bg-linear-to-r from-violet-400 via-fuchsia-400 to-sky-400 transition-[width] duration-300 ease-out"
+        :style="{ width: `${progress}%` }"
+      />
     </div>
 
-    <div class="mt-4 min-h-64 rounded-3xl border border-dashed border-default bg-default/90 p-4">
-      <p
-        v-if="segments.length"
-        class="flex flex-wrap gap-y-3 text-xl leading-9 whitespace-pre-wrap text-highlighted"
-      >
-        <span
-          v-for="(segment, index) in segments"
-          :key="`${segment.start}-${segment.end}`"
-          :ref="setSegmentRefAt(index)"
-          class="dictation-segment"
-          :class="{
-            'dictation-segment--active': currentIndex === index,
-            'dictation-segment--complete': currentIndex !== null && index < currentIndex
-          }"
-        >
-          {{ segment.display }}
-        </span>
-      </p>
-      <p v-else class="flex min-h-52 items-center justify-center text-center text-base text-muted">
-        Paste or type text above to see the karaoke-style guide before you start playback.
-      </p>
-    </div>
-
-    <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-      <span
-        ><strong class="text-default font-semibold">{{ segmentCount }}</strong> segments</span
-      >
-      <span
-        ><strong class="text-default font-semibold">{{ completedCycles }}</strong> rounds</span
-      >
-      <span>{{ loopPlayback ? 'Looping continuously' : `Repeat ${repeatCount}×` }}</span>
-    </div>
+    <p class="sr-only" aria-live="polite">{{ progressText }}</p>
   </div>
 </template>
 
 <style scoped>
-.dictation-segment {
-  border-radius: 0.75rem;
-  padding: 0 0.15em;
-  text-decoration-thickness: 0.12em;
-  text-underline-offset: 0.28em;
-  transition:
-    transform 220ms ease,
-    color 220ms ease,
-    background-color 220ms ease,
-    text-decoration-color 220ms ease,
-    box-shadow 220ms ease;
+.visualizer-stage {
+  background:
+    radial-gradient(120% 80% at 50% 50%, rgb(76 54 255 / 0.1), transparent 60%),
+    var(--stage-bg);
 }
 
-.dictation-segment--active {
-  background: color-mix(in srgb, var(--ui-primary) 16%, transparent);
-  color: var(--ui-text-highlighted);
-  text-decoration: underline;
-  text-decoration-color: var(--ui-primary);
-  transform: scale(1.08);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ui-primary) 25%, transparent);
+.visualizer-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 80px rgb(120 90 255 / 0.12);
+  transition: box-shadow 600ms ease;
 }
 
-.dictation-segment--complete {
-  color: var(--ui-text-muted);
+.visualizer-stage--active::after {
+  box-shadow: inset 0 0 120px rgb(150 100 255 / 0.28);
 }
 </style>
