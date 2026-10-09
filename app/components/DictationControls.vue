@@ -183,11 +183,13 @@ watch(selectedLanguage, lang => {
       </div>
     </div>
 
+    <!-- The body scrolls, which clips sideways too, so it bleeds into the
+         sheet padding to leave room for the slider thumb and its glow -->
     <UDrawer
       v-model:open="settingsOpen"
       title="Settings"
       description="Choose how your text is dictated."
-      :ui="{ content: 'max-h-[90dvh] bg-default/85 backdrop-blur-2xl md:hidden', body: 'overflow-y-auto pb-8' }"
+      :ui="{ content: 'max-h-[90dvh] bg-default/85 backdrop-blur-2xl md:hidden', body: '-mx-4 overflow-y-auto px-4 pb-8' }"
     >
       <template #body>
         <div class="grid gap-5">

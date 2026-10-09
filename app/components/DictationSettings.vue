@@ -36,8 +36,8 @@ const voiceItems = computed(() => props.voices.map(v => ({ label: v.name, value:
           <UTabs
             :model-value="mode"
             :items="[
-              { label: 'Letters', value: 'characters', icon: 'i-lucide-case-sensitive' },
-              { label: 'Sentences', value: 'sentences', icon: 'i-lucide-text' }
+              { label: 'Sentences', value: 'sentences', icon: 'i-lucide-text' },
+              { label: 'Letters', value: 'characters', icon: 'i-lucide-case-sensitive' }
             ]"
             variant="pill"
             :content="false"
