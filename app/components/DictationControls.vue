@@ -31,6 +31,12 @@ const emit = defineEmits<{
 }>()
 
 const selectedLanguage = ref('')
+const settingsOpen = ref(false)
+
+const playButtonLabel = computed(() => {
+  if (props.isPlaying) return 'Stop dictation'
+  return props.currentIndex === null ? 'Start dictation' : 'Resume dictation'
+})
 
 // Remember the last voice the user picked for each language
 const lastVoicePerLanguage = reactive<Record<string, string>>({})
@@ -109,118 +115,48 @@ watch(selectedLanguage, lang => {
         />
       </div>
 
-      <!-- Split into two columns only when the panel itself is wide enough -->
-      <div class="grid grid-cols-1 gap-5 @lg:grid-cols-2">
-        <div class="grid min-w-0 content-start gap-4">
-          <div class="grid gap-2">
-            <span class="field-label">Dictation mode</span>
-            <UTabs
-              :model-value="mode"
-              :items="[
-                { label: 'Letters', value: 'characters', icon: 'i-lucide-case-sensitive' },
-                { label: 'Sentences', value: 'sentences', icon: 'i-lucide-text' }
-              ]"
-              variant="pill"
-              :content="false"
-              :ui="{
-                root: 'min-w-0',
-                list: 'w-full rounded-full bg-elevated/60 ring-1 ring-default p-1',
-                indicator: 'rounded-full gradient-action',
-                trigger: 'min-w-0 flex-1 justify-center rounded-full data-[state=active]:text-white',
-                label: 'truncate'
-              }"
-              @update:model-value="emit('update:mode', $event as DictationMode)"
-            />
-          </div>
+      <!-- On phones the settings move into a bottom sheet behind the settings button -->
+      <DictationSettings
+        class="hidden md:block"
+        :mode="mode"
+        :rate="rate"
+        :repeat-count="repeatCount"
+        :loop-playback="loopPlayback"
+        :languages="languages"
+        :selected-language="selectedLanguage"
+        :voices="filteredVoices"
+        :selected-voice="selectedVoice"
+        @update:mode="emit('update:mode', $event)"
+        @update:rate="emit('update:rate', $event)"
+        @update:repeat-count="emit('update:repeatCount', $event)"
+        @update:loop-playback="emit('update:loopPlayback', $event)"
+        @update:selected-language="selectedLanguage = $event"
+        @update:selected-voice="emit('update:selectedVoice', $event)"
+      />
 
-          <div class="grid gap-2">
-            <span class="field-label">Language</span>
-            <USelect
-              :model-value="selectedLanguage"
-              :items="languages"
-              icon="i-lucide-globe"
-              placeholder="All languages"
-              class="w-full min-w-0"
-              @update:model-value="selectedLanguage = $event"
-            />
-          </div>
-          <div class="grid gap-2">
-            <span class="field-label">Voice</span>
-            <USelect
-              :model-value="selectedVoice"
-              :items="filteredVoices.map(v => ({ label: v.name, value: v.voiceURI }))"
-              icon="i-lucide-audio-lines"
-              placeholder="Select a voice"
-              class="w-full min-w-0"
-              @update:model-value="emit('update:selectedVoice', $event)"
-            />
-          </div>
-        </div>
-
-        <div class="grid min-w-0 content-start gap-4">
-          <div class="grid gap-2">
-            <div class="flex items-center justify-between gap-3">
-              <span class="field-label">Dictation speed</span>
-              <span class="font-mono text-sm tabular-nums gradient-text">{{ rate.toFixed(1) }}x</span>
-            </div>
-            <USlider
-              :model-value="rate"
-              :min="0.5"
-              :max="2"
-              :step="0.1"
-              class="py-2"
-              :ui="{
-                range: 'bg-linear-to-r from-violet-500 via-indigo-500 to-fuchsia-500',
-                thumb: 'ring-primary bg-white shadow-[0_0_12px_rgb(139_92_246/0.8)]'
-              }"
-              @update:model-value="emit('update:rate', $event ?? 1)"
-            />
-          </div>
-
-          <div class="grid gap-2">
-            <span class="field-label">Repeat count</span>
-            <UInputNumber
-              :model-value="repeatCount"
-              :min="1"
-              :max="25"
-              :disabled="loopPlayback"
-              class="w-full"
-              @update:model-value="emit('update:repeatCount', $event ?? 1)"
-            />
-          </div>
-
-          <USwitch
-            :model-value="loopPlayback"
-            label="Loop continuously"
-            description="Keep repeating until you stop playback"
-            @update:model-value="emit('update:loopPlayback', $event === true)"
-          />
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-3 border-t border-default pt-5 sm:flex-row sm:flex-wrap sm:items-center">
+      <div class="flex items-center gap-3 border-t border-default pt-5">
+        <!-- One button that toggles between starting and stopping playback -->
         <UButton
-          icon="i-lucide-play"
+          :icon="isPlaying ? 'i-lucide-square' : 'i-lucide-play'"
           size="xl"
-          class="gradient-action w-full justify-center rounded-full px-6 sm:w-auto"
-          :disabled="!canStart"
-          @click="emit('start')"
+          class="gradient-action flex-1 justify-center rounded-full px-6 md:flex-none"
+          :disabled="!isPlaying && !canStart"
+          @click="isPlaying ? emit('stop') : emit('start')"
         >
-          {{ currentIndex === null ? 'Start dictation' : 'Resume dictation' }}
+          {{ playButtonLabel }}
         </UButton>
-        <div class="flex justify-center gap-2">
-          <UTooltip text="Stop">
-            <UButton
-              icon="i-lucide-square"
-              color="neutral"
-              variant="soft"
-              size="xl"
-              class="rounded-full"
-              aria-label="Stop"
-              :disabled="!isPlaying"
-              @click="emit('stop')"
-            />
-          </UTooltip>
+
+        <UButton
+          icon="i-lucide-settings-2"
+          color="neutral"
+          variant="soft"
+          size="xl"
+          class="rounded-full md:hidden"
+          aria-label="Settings"
+          @click="settingsOpen = true"
+        />
+
+        <div class="hidden gap-2 md:flex">
           <UTooltip text="Reset">
             <UButton
               icon="i-lucide-rotate-ccw"
@@ -246,5 +182,56 @@ watch(selectedLanguage, lang => {
         </div>
       </div>
     </div>
+
+    <UDrawer
+      v-model:open="settingsOpen"
+      title="Settings"
+      description="Choose how your text is dictated."
+      :ui="{ content: 'max-h-[90dvh] bg-default/85 backdrop-blur-2xl md:hidden', body: 'overflow-y-auto pb-8' }"
+    >
+      <template #body>
+        <div class="grid gap-5">
+          <DictationSettings
+            :mode="mode"
+            :rate="rate"
+            :repeat-count="repeatCount"
+            :loop-playback="loopPlayback"
+            :languages="languages"
+            :selected-language="selectedLanguage"
+            :voices="filteredVoices"
+            :selected-voice="selectedVoice"
+            @update:mode="emit('update:mode', $event)"
+            @update:rate="emit('update:rate', $event)"
+            @update:repeat-count="emit('update:repeatCount', $event)"
+            @update:loop-playback="emit('update:loopPlayback', $event)"
+            @update:selected-language="selectedLanguage = $event"
+            @update:selected-voice="emit('update:selectedVoice', $event)"
+          />
+
+          <div class="grid grid-cols-2 gap-3 border-t border-default pt-5">
+            <UButton
+              icon="i-lucide-rotate-ccw"
+              color="neutral"
+              variant="soft"
+              size="lg"
+              class="justify-center rounded-full"
+              @click="emit('reset')"
+            >
+              Reset
+            </UButton>
+            <UButton
+              icon="i-lucide-eraser"
+              color="error"
+              variant="soft"
+              size="lg"
+              class="justify-center rounded-full"
+              @click="emit('clear')"
+            >
+              Clear text
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UDrawer>
   </div>
 </template>
