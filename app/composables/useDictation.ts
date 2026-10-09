@@ -286,6 +286,10 @@ export function useDictation() {
     }
   })
 
+  const currentSpeech = computed(() =>
+    currentIndex.value === null ? '' : (segments.value[currentIndex.value]?.speech ?? '')
+  )
+
   // Expose voices from speech synthesis for the template
   const voices = computed(() => speech.voices.value)
 
@@ -300,6 +304,9 @@ export function useDictation() {
     segments,
     currentIndex,
     isPlaying,
+    isSpeaking: speech.isSpeaking,
+    spokenCharIndex: speech.charIndex,
+    currentSpeech,
     completedCycles,
     canStart,
     progressText,

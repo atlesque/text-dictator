@@ -4,12 +4,15 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 export function useSpeechSynthesis(): {
   voices: Ref<SpeechSynthesisVoice[]>
   isSpeaking: Ref<boolean>
+  charIndex: Ref<number>
   loadVoices: () => void
   speak: (text: string, rate: number, voiceURI?: string) => Promise<void>
   cancel: () => void
 } {
   const voices = ref<SpeechSynthesisVoice[]>([])
   const isSpeaking = ref(false)
+  // Position of the last word boundary the engine reported, where supported
+  const charIndex = ref(0)
 
   function loadVoices(): void {
     if (!import.meta.client) {
@@ -27,6 +30,7 @@ export function useSpeechSynthesis(): {
   function speak(text: string, rate: number, voiceURI?: string): Promise<void> {
     const clampedRate = Math.max(0.1, Math.min(10, rate))
     isSpeaking.value = true
+    charIndex.value = 0
 
     return new Promise((resolve, reject) => {
       const utterance = new SpeechSynthesisUtterance(text)
@@ -38,6 +42,10 @@ export function useSpeechSynthesis(): {
         if (voice) {
           utterance.voice = voice
         }
+      }
+
+      utterance.onboundary = event => {
+        charIndex.value = event.charIndex
       }
 
       utterance.onend = () => {
@@ -82,6 +90,7 @@ export function useSpeechSynthesis(): {
   return {
     voices,
     isSpeaking,
+    charIndex,
     loadVoices,
     speak,
     cancel
