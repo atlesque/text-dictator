@@ -23,11 +23,11 @@ void main() {
 }
 `
 
-// Iridescent light bar. Each strand is one frequency band (low bands are long
-// slow waves near the center, high bands are fine fast ripples that reach
-// further out) and its height follows that band's energy. Overall amplitude
-// widens the bar outward from the center and grows the orb behind it, and
-// onsets kick the strands and sharpen them for a moment.
+// Iridescent light bar laid out like a mirrored spectrum analyzer: low bands
+// lift the center and high bands lift the edges, so a vowel swells the middle
+// and an "s" lights the sides. The strands are waves of different lengths
+// riding on that spectral shape. Overall amplitude grows the orb behind it,
+// and onsets kick the strands and sharpen them for a moment.
 const fragmentSource = `
 precision highp float;
 
@@ -82,30 +82,38 @@ void main() {
 
   // Strands and sparkles only live near the band, so skip the work elsewhere
   if (ay < uReach) {
+    // Spectrum across the bar like a mirrored analyzer: low bands in the
+    // center, high bands toward both edges, interpolated between bands
+    float bandPos = clamp(abs(xn) / 0.82, 0.0, 1.0) * float(BANDS - 1);
+    float spectral = 0.0;
+    for (int i = 0; i < BANDS; i++) {
+      float w = max(0.0, 1.0 - abs(bandPos - float(i)));
+      spectral += uBands[i] * w * w * (3.0 - 2.0 * w);
+    }
+    float taper = smoothstep(1.0, 0.85, abs(xn));
+
     float leading = 0.0;
     for (int i = 0; i < BANDS; i++) {
       float fi = float(i);
       float energy = uBands[i];
-      // Higher bands spread wider, so sibilants ripple out and vowels bulge
-      float bandSpread = spread * (0.8 + 0.09 * fi);
-      float bandEnvelope = exp(-(xn * xn) / (bandSpread * bandSpread));
-      float amp = (0.008 + 0.2 * energy) * bandEnvelope * (1.0 + 0.35 * uTransient);
+      float bandEnvelope = spectral * taper;
+      float amp = (0.006 + 0.2 * bandEnvelope * (0.7 + 0.3 * energy)) * (1.0 + 0.3 * uTransient) * taper;
       float frequency = 2.2 + fi * 1.25;
       float phase = uTime * (0.7 + 0.32 * fi) + fi * 1.9;
       float y = amp * sin(xn * frequency + phase) * (0.75 + 0.25 * sin(uTime * 0.6 + fi * 2.3));
       if (i == 0) leading = y;
 
       float d = abs(uv.y - y);
-      float thickness = 0.0014 + 0.004 * energy * bandEnvelope;
+      float thickness = 0.0014 + 0.004 * bandEnvelope;
       float core = exp(-d / thickness);
-      float halo = 0.05 * exp(-d / 0.025) * bandEnvelope * (0.25 + energy);
+      float halo = 0.05 * exp(-d / 0.025) * (0.2 + bandEnvelope) * (0.25 + energy);
       color += spectrum(paletteX + (fi - 3.0) * 0.045) * (core * (0.65 + 0.35 * uTransient) + halo) * edgeFade;
     }
 
     // Filled ribbon under the low band
     float ribbon = uv.y / (leading + sign(leading) * 0.0001);
     if (ribbon > 0.0 && ribbon < 1.0) {
-      color += spectrum(paletteX - 0.05) * 0.32 * ribbon * ribbon * envelope * edgeFade;
+      color += spectrum(paletteX - 0.05) * 0.32 * ribbon * ribbon * spectral * taper * edgeFade;
     }
 
     // Sparkles follow the high bands, so sibilants fizz
@@ -231,6 +239,7 @@ function draw(dt: number) {
   const { bands, amplitude, transient } = signal.update(
     {
       text: props.speechText,
+      isPlaying: props.isPlaying,
       isSpeaking: props.isSpeaking && props.isPlaying,
       hasStarted: props.hasStarted,
       rate: props.rate,
@@ -239,7 +248,7 @@ function draw(dt: number) {
     dt
   )
 
-  const speed = prefersReducedMotion ? 0.25 : 0.55 + amplitude * 1.4 + transient * 1.2
+  const speed = prefersReducedMotion ? 0.25 : 0.6 + amplitude * 1.1 + transient * 0.6
   elapsed += dt * speed
 
   let loudestBand = 0
