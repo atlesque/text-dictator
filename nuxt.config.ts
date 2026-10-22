@@ -58,6 +58,7 @@ export default defineNuxtConfig({
         { rel: 'manifest', href: '/site.webmanifest' }
       ],
       script: [
+        { src: 'https://tools.atlesque.dev/consent.js', defer: true },
         {
           type: 'application/ld+json',
           innerHTML: JSON.stringify({
